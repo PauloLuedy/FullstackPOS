@@ -30,3 +30,4 @@ python jogo_apostas_gui.py
 - Chance de ganhar: 15% (50% maior que o normal)
 # gitTest
 # MyRoudmaps
+# MyRoudmaps
