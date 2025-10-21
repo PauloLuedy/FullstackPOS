@@ -29,3 +29,4 @@ python jogo_apostas_gui.py
 - Números válidos: 1 a 10
 - Chance de ganhar: 15% (50% maior que o normal)
 # gitTest
+# MyRoudmaps
