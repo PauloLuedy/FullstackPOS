@@ -1,0 +1,385 @@
+{
+	"info": {
+		"_postman_id": "blogging-platform-api",
+		"name": "Blogging Platform API - Tech Challenge Fase 02",
+		"description": "Coleção completa da API de Blogging para Professores da Rede Pública.\n\n## Sobre\nPlataforma de blogging desenvolvida para professores postarem suas aulas e transmitir conhecimento de forma centralizada e tecnológica.\n\n## Tecnologias\n- Node.js + Express.js\n- PostgreSQL\n- Docker\n\n## Configuração\nCertifique-se de que a API esteja rodando em http://localhost:3000\n\nPara iniciar com Docker:\n```\ndocker-compose up -d\n```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "API Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Retorna informações básicas da API, incluindo nome, versão e endpoints disponíveis."
+					},
+					"response": []
+				},
+				{
+					"name": "Health Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verifica o status de saúde da API e a conexão com o banco de dados PostgreSQL."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para verificar o status e saúde da API."
+		},
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "Listar Todos os Posts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has data array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response has count field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts"
+							]
+						},
+						"description": "Retorna uma lista de todos os posts ordenados por data de criação (mais recentes primeiro).\n\n**Resposta de Sucesso:**\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Introdução ao JavaScript\",\n      \"content\": \"JavaScript é uma linguagem de programação...\",\n      \"author\": \"Professor Silva\",\n      \"created_at\": \"2024-03-10T10:00:00.000Z\",\n      \"updated_at\": \"2024-03-10T10:00:00.000Z\"\n    }\n  ],\n  \"count\": 1\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Post por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has post data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('title');",
+									"    pm.expect(jsonData.data).to.have.property('content');",
+									"    pm.expect(jsonData.data).to.have.property('author');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "ID do post"
+								}
+							]
+						},
+						"description": "Retorna os detalhes de um post específico pelo ID.\n\n**Parâmetros:**\n- `id` (path) - ID do post\n\n**Resposta de Sucesso (200):**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Introdução ao JavaScript\",\n    \"content\": \"JavaScript é uma linguagem de programação...\",\n    \"author\": \"Professor Silva\",\n    \"created_at\": \"2024-03-10T10:00:00.000Z\",\n    \"updated_at\": \"2024-03-10T10:00:00.000Z\"\n  }\n}\n```\n\n**Resposta de Erro (404):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Post não encontrado\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Novo Post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Post created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.eql('Post criado com sucesso');",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"});",
+									"",
+									"// Salva o ID do post criado para uso em outras requisições",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"lastPostId\", jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Algoritmos de Ordenação\",\n  \"content\": \"Nesta aula vamos aprender sobre Bubble Sort, Quick Sort e Merge Sort. Os algoritmos de ordenação são fundamentais para a ciência da computação...\",\n  \"author\": \"Professora Maria\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts"
+							]
+						},
+						"description": "Cria um novo post no blog.\n\n**Body (JSON):**\n```json\n{\n  \"title\": \"Título do post (obrigatório)\",\n  \"content\": \"Conteúdo do post (obrigatório)\",\n  \"author\": \"Nome do autor (obrigatório)\"\n}\n```\n\n**Resposta de Sucesso (201):**\n```json\n{\n  \"success\": true,\n  \"message\": \"Post criado com sucesso\",\n  \"data\": {\n    \"id\": 2,\n    \"title\": \"Algoritmos de Ordenação\",\n    \"content\": \"Nesta aula vamos aprender...\",\n    \"author\": \"Professora Maria\",\n    \"created_at\": \"2024-03-10T11:00:00.000Z\",\n    \"updated_at\": \"2024-03-10T11:00:00.000Z\"\n  }\n}\n```\n\n**Resposta de Erro (400):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Título, conteúdo e autor são obrigatórios\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Post updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.eql('Post atualizado com sucesso');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Introdução ao JavaScript - Atualizado\",\n  \"content\": \"JavaScript é uma linguagem de programação versátil e poderosa. Nesta aula atualizada, vamos explorar conceitos modernos como ES6+, async/await e muito mais...\",\n  \"author\": \"Professor Silva\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "ID do post a ser atualizado"
+								}
+							]
+						},
+						"description": "Atualiza um post existente.\n\n**Parâmetros:**\n- `id` (path) - ID do post a ser atualizado\n\n**Body (JSON):**\n```json\n{\n  \"title\": \"Novo título (obrigatório)\",\n  \"content\": \"Novo conteúdo (obrigatório)\",\n  \"author\": \"Nome do autor (obrigatório)\"\n}\n```\n\n**Resposta de Sucesso (200):**\n```json\n{\n  \"success\": true,\n  \"message\": \"Post atualizado com sucesso\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Introdução ao JavaScript - Atualizado\",\n    \"content\": \"JavaScript é uma linguagem de programação versátil...\",\n    \"author\": \"Professor Silva\",\n    \"created_at\": \"2024-03-10T10:00:00.000Z\",\n    \"updated_at\": \"2024-03-10T12:00:00.000Z\"\n  }\n}\n```\n\n**Resposta de Erro (404):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Post não encontrado\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir Post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Post deleted successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.eql('Post excluído com sucesso');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "ID do post a ser excluído"
+								}
+							]
+						},
+						"description": "Exclui um post específico pelo ID.\n\n**Parâmetros:**\n- `id` (path) - ID do post a ser excluído\n\n**Resposta de Sucesso (200):**\n```json\n{\n  \"success\": true,\n  \"message\": \"Post excluído com sucesso\",\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Introdução ao JavaScript - Atualizado\",\n    \"content\": \"JavaScript é uma linguagem de programação versátil...\",\n    \"author\": \"Professor Silva\",\n    \"created_at\": \"2024-03-10T10:00:00.000Z\",\n    \"updated_at\": \"2024-03-10T12:00:00.000Z\"\n  }\n}\n```\n\n**Resposta de Erro (404):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Post não encontrado\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Posts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has search results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData).to.have.property('keyword');",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/posts/search?q=JavaScript",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"posts",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "JavaScript",
+									"description": "Palavra-chave para buscar (case-insensitive)"
+								}
+							]
+						},
+						"description": "Busca posts que contenham a palavra-chave no título ou conteúdo.\n\n**Query Parameters:**\n- `q` (obrigatório) - Palavra-chave para buscar (case-insensitive)\n\n**Exemplos de busca:**\n- `?q=JavaScript` - Busca posts sobre JavaScript\n- `?q=algoritmo` - Busca posts sobre algoritmos\n- `?q=programação` - Busca posts sobre programação\n\n**Resposta de Sucesso (200):**\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"title\": \"Introdução ao JavaScript\",\n      \"content\": \"JavaScript é uma linguagem de programação...\",\n      \"author\": \"Professor Silva\",\n      \"created_at\": \"2024-03-10T10:00:00.000Z\",\n      \"updated_at\": \"2024-03-10T10:00:00.000Z\"\n    }\n  ],\n  \"count\": 1,\n  \"keyword\": \"JavaScript\"\n}\n```\n\n**Resposta de Erro (400):**\n```json\n{\n  \"success\": false,\n  \"message\": \"Parâmetro de busca \\\"q\\\" é obrigatório\"\n}\n```"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gerenciar posts do blog (CRUD completo + busca)."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "lastPostId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
