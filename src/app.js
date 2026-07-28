@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const postRoutes = require('./routes/postRoutes');
+const authRoutes = require('./routes/authRoutes');
+const teacherRoutes = require('./routes/teacherRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -18,6 +21,9 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/posts', postRoutes);
+app.use('/auth', authRoutes);
+app.use('/teachers', teacherRoutes);
+app.use('/students', studentRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -28,10 +34,21 @@ app.get('/', (req, res) => {
       'GET /health': 'Verificar status da API',
       'GET /posts': 'Listar todos os posts',
       'GET /posts/:id': 'Obter um post específico',
-      'POST /posts': 'Criar um novo post',
-      'PUT /posts/:id': 'Atualizar um post',
-      'DELETE /posts/:id': 'Excluir um post',
-      'GET /posts/search?q=keyword': 'Buscar posts por palavra-chave'
+      'POST /posts': 'Criar um novo post (autenticado)',
+      'PUT /posts/:id': 'Atualizar um post (autenticado)',
+      'DELETE /posts/:id': 'Excluir um post (autenticado)',
+      'GET /posts/search?q=keyword': 'Buscar posts por palavra-chave',
+      'POST /auth/login': 'Autenticar professor',
+      'GET /teachers': 'Listar professores paginado (autenticado)',
+      'GET /teachers/:id': 'Obter um professor específico (autenticado)',
+      'POST /teachers': 'Cadastrar um professor (autenticado)',
+      'PUT /teachers/:id': 'Atualizar um professor (autenticado)',
+      'DELETE /teachers/:id': 'Excluir um professor (autenticado)',
+      'GET /students': 'Listar alunos paginado (autenticado)',
+      'GET /students/:id': 'Obter um aluno específico (autenticado)',
+      'POST /students': 'Cadastrar um aluno (autenticado)',
+      'PUT /students/:id': 'Atualizar um aluno (autenticado)',
+      'DELETE /students/:id': 'Excluir um aluno (autenticado)'
     }
   });
 });

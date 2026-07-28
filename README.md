@@ -65,19 +65,31 @@ O projeto segue uma arquitetura em camadas (MVC adaptado):
 FullStackPos/
 ├── src/
 │   ├── config/
-│   │   └── database.js          # Configuração do PostgreSQL
+│   │   └── database.js          # Configuração do PostgreSQL + schema + seed
 │   ├── models/
-│   │   └── Post.js              # Model de Post (queries SQL)
+│   │   ├── Post.js               # Model de Post (queries SQL)
+│   │   ├── Teacher.js             # Model de Professor (queries SQL)
+│   │   └── Student.js             # Model de Aluno (queries SQL)
 │   ├── controllers/
-│   │   └── postController.js    # Lógica de negócio
+│   │   ├── postController.js     # Lógica de negócio de posts
+│   │   ├── authController.js     # Login de professores
+│   │   ├── teacherController.js  # Lógica de negócio de professores
+│   │   └── studentController.js  # Lógica de negócio de alunos
 │   ├── routes/
-│   │   └── postRoutes.js        # Definição de rotas
+│   │   ├── postRoutes.js         # Definição de rotas de posts
+│   │   ├── authRoutes.js         # Rota de login
+│   │   ├── teacherRoutes.js      # Rotas de professores
+│   │   └── studentRoutes.js      # Rotas de alunos
 │   ├── middleware/
-│   │   └── errorHandler.js      # Tratamento de erros
+│   │   ├── errorHandler.js      # Tratamento de erros
+│   │   └── auth.js               # Middleware de autenticação JWT
 │   ├── app.js                   # Configuração do Express
 │   └── server.js                # Inicialização do servidor
 ├── tests/
-│   └── post.test.js             # Testes unitários
+│   ├── post.test.js             # Testes unitários de posts
+│   ├── auth.test.js             # Testes unitários de autenticação
+│   ├── teacher.test.js          # Testes unitários de professores
+│   └── student.test.js          # Testes unitários de alunos
 ├── .env.example                 # Exemplo de variáveis de ambiente
 ├── .gitignore
 ├── .dockerignore
@@ -97,6 +109,27 @@ FullStackPos/
 | title      | VARCHAR(255) | Título do post                      |
 | content    | TEXT         | Conteúdo do post                    |
 | author     | VARCHAR(100) | Nome do autor/professor             |
+| created_at | TIMESTAMP    | Data de criação                     |
+| updated_at | TIMESTAMP    | Data da última atualização          |
+
+**Tabela: teachers**
+
+| Campo         | Tipo         | Descrição                          |
+|---------------|--------------|-------------------------------------|
+| id            | SERIAL       | Identificador único (PK)            |
+| name          | VARCHAR(100) | Nome do professor                   |
+| email         | VARCHAR(150) | Email do professor (único, login)   |
+| password_hash | VARCHAR(255) | Senha com hash (bcrypt)             |
+| created_at    | TIMESTAMP    | Data de criação                     |
+| updated_at    | TIMESTAMP    | Data da última atualização          |
+
+**Tabela: students**
+
+| Campo      | Tipo         | Descrição                          |
+|------------|--------------|-------------------------------------|
+| id         | SERIAL       | Identificador único (PK)            |
+| name       | VARCHAR(100) | Nome do aluno                       |
+| email      | VARCHAR(150) | Email do aluno (único)              |
 | created_at | TIMESTAMP    | Data de criação                     |
 | updated_at | TIMESTAMP    | Data da última atualização          |
 
@@ -138,7 +171,15 @@ DB_PORT=5432
 DB_NAME=blogging_platform
 DB_USER=postgres
 DB_PASSWORD=postgres
+
+JWT_SECRET=change-me-in-production
+JWT_EXPIRES_IN=1d
+
+DEFAULT_TEACHER_EMAIL=admin@blogging.com
+DEFAULT_TEACHER_PASSWORD=admin123
 ```
+
+Na primeira inicialização, um professor padrão é criado automaticamente com as credenciais de `DEFAULT_TEACHER_EMAIL`/`DEFAULT_TEACHER_PASSWORD`, para permitir o primeiro login (a partir dele, novos professores podem ser cadastrados via API).
 
 4. **Certifique-se de que o PostgreSQL está rodando**
 
@@ -383,12 +424,89 @@ curl http://localhost:3000/posts/search?q=JavaScript
 }
 ```
 
+### Autenticação
+
+A API usa autenticação via **JWT (JSON Web Token)**. As rotas de criação/edição/exclusão de posts e todas as rotas de `/teachers` e `/students` exigem um token válido, enviado no header:
+
+```
+Authorization: Bearer <token>
+```
+
+#### Login
+
+**POST /auth/login**
+
+Autentica um professor e retorna um token JWT.
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@blogging.com",
+    "password": "admin123"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "teacher": {
+      "id": 1,
+      "name": "Administrador",
+      "email": "admin@blogging.com"
+    }
+  }
+}
+```
+
+### Professores
+
+Todas as rotas abaixo exigem autenticação (`Authorization: Bearer <token>`).
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/teachers?page=1&limit=10` | Lista professores paginada |
+| GET | `/teachers/:id` | Obtém um professor específico |
+| POST | `/teachers` | Cadastra um novo professor (`name`, `email`, `password`) |
+| PUT | `/teachers/:id` | Atualiza um professor (`name`, `email`, `password` opcional) |
+| DELETE | `/teachers/:id` | Exclui um professor |
+
+**Exemplo de criação:**
+```bash
+curl -X POST http://localhost:3000/teachers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "name": "Professora Maria",
+    "email": "maria@escola.com",
+    "password": "senha123"
+  }'
+```
+
+A senha nunca é retornada nas respostas da API.
+
+### Alunos
+
+Todas as rotas abaixo exigem autenticação (`Authorization: Bearer <token>`) — alunos não possuem login próprio; são cadastrados e gerenciados pelos professores.
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/students?page=1&limit=10` | Lista alunos paginada |
+| GET | `/students/:id` | Obtém um aluno específico |
+| POST | `/students` | Cadastra um novo aluno (`name`, `email`) |
+| PUT | `/students/:id` | Atualiza um aluno (`name`, `email`) |
+| DELETE | `/students/:id` | Exclui um aluno |
+
 ### Códigos de Status HTTP
 
 - `200 OK` - Requisição bem-sucedida
-- `201 Created` - Post criado com sucesso
+- `201 Created` - Recurso criado com sucesso
 - `400 Bad Request` - Dados inválidos ou faltando
-- `404 Not Found` - Post não encontrado
+- `401 Unauthorized` - Token ausente, inválido ou expirado
+- `404 Not Found` - Recurso não encontrado
 - `500 Internal Server Error` - Erro no servidor
 
 ---
@@ -456,6 +574,10 @@ open coverage/lcov-report/index.html
 - ✅ PUT /posts/:id - Atualizar post
 - ✅ DELETE /posts/:id - Excluir post
 - ✅ GET /posts/search - Buscar posts
+- ✅ POST/PUT/DELETE /posts - Bloqueio sem autenticação (401)
+- ✅ POST /auth/login - Login com sucesso, senha incorreta, professor inexistente
+- ✅ CRUD completo de /teachers (autenticado, paginado)
+- ✅ CRUD completo de /students (autenticado, paginado)
 - ✅ 404 Handler - Endpoints inexistentes
 - ✅ Validações de campos obrigatórios
 - ✅ Tratamento de erros

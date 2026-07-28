@@ -35,6 +35,10 @@ services:
       DB_NAME: blogging_platform
       DB_USER: postgres
       DB_PASSWORD: postgres
+      JWT_SECRET: change-me-in-production
+      JWT_EXPIRES_IN: 1d
+      DEFAULT_TEACHER_EMAIL: admin@blogging.com
+      DEFAULT_TEACHER_PASSWORD: admin123
     depends_on:
       db:
         condition: service_healthy

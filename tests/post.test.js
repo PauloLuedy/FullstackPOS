@@ -1,4 +1,5 @@
 const request = require('supertest');
+const jwt = require('jsonwebtoken');
 const app = require('../src/app');
 const { pool } = require('../src/config/database');
 
@@ -10,6 +11,12 @@ jest.mock('../src/config/database', () => ({
   },
   initDatabase: jest.fn()
 }));
+
+const validToken = jwt.sign(
+  { id: 1, email: 'admin@blogging.com', name: 'Administrador' },
+  process.env.JWT_SECRET || 'change-me-in-production'
+);
+const authHeader = `Bearer ${validToken}`;
 
 describe('API de Blogging - Testes de Endpoints', () => {
 
@@ -108,6 +115,7 @@ describe('API de Blogging - Testes de Endpoints', () => {
 
       const response = await request(app)
         .post('/posts')
+        .set('Authorization', authHeader)
         .send(newPost);
 
       expect(response.status).toBe(201);
@@ -119,11 +127,21 @@ describe('API de Blogging - Testes de Endpoints', () => {
     it('deve retornar 400 quando campos obrigatórios estão faltando', async () => {
       const response = await request(app)
         .post('/posts')
+        .set('Authorization', authHeader)
         .send({ title: 'Título sem conteúdo' });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.message).toContain('obrigatórios');
+    });
+
+    it('deve retornar 401 quando não autenticado', async () => {
+      const response = await request(app)
+        .post('/posts')
+        .send({ title: 'Título', content: 'Conteúdo', author: 'Autor' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.success).toBe(false);
     });
   });
 
@@ -140,6 +158,7 @@ describe('API de Blogging - Testes de Endpoints', () => {
 
       const response = await request(app)
         .put('/posts/1')
+        .set('Authorization', authHeader)
         .send(updatedData);
 
       expect(response.status).toBe(200);
@@ -153,6 +172,7 @@ describe('API de Blogging - Testes de Endpoints', () => {
 
       const response = await request(app)
         .put('/posts/999')
+        .set('Authorization', authHeader)
         .send({
           title: 'Título',
           content: 'Conteúdo',
@@ -166,9 +186,19 @@ describe('API de Blogging - Testes de Endpoints', () => {
     it('deve retornar 400 quando campos obrigatórios estão faltando', async () => {
       const response = await request(app)
         .put('/posts/1')
+        .set('Authorization', authHeader)
         .send({ title: 'Apenas título' });
 
       expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('deve retornar 401 quando não autenticado', async () => {
+      const response = await request(app)
+        .put('/posts/1')
+        .send({ title: 'Título', content: 'Conteúdo', author: 'Autor' });
+
+      expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
   });
@@ -184,7 +214,9 @@ describe('API de Blogging - Testes de Endpoints', () => {
 
       pool.query.mockResolvedValue({ rows: [mockDeletedPost] });
 
-      const response = await request(app).delete('/posts/1');
+      const response = await request(app)
+        .delete('/posts/1')
+        .set('Authorization', authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -194,9 +226,18 @@ describe('API de Blogging - Testes de Endpoints', () => {
     it('deve retornar 404 ao tentar excluir post inexistente', async () => {
       pool.query.mockResolvedValue({ rows: [] });
 
-      const response = await request(app).delete('/posts/999');
+      const response = await request(app)
+        .delete('/posts/999')
+        .set('Authorization', authHeader);
 
       expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('deve retornar 401 quando não autenticado', async () => {
+      const response = await request(app).delete('/posts/1');
+
+      expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
     });
   });
